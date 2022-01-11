@@ -8,7 +8,7 @@
 
 const unsigned int SCREEN_WIDTH = 800, SCREEN_HEIGHT = 600;
 
-Camera camera(glm::vec3(1.0f, 1.0f, 2.0f));
+Camera camera(glm::vec3(0.0f, 1.0f, 5.0f));
 glm::mat4 projection, view;
 
 float lastX = SCREEN_WIDTH / 2.0f;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 
 	Shader shader("planet.vert", "planet.frag");
 	Shader lightShader("planet.vert", "sun.frag");
-	Cube c(shader, glm::vec3(1.0f, 1.0f, 3.0f)), sun(lightShader);
+	Cube c(shader, glm::vec3(1.0f, 1.0f, 3.0f)), sun(lightShader, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -102,11 +102,11 @@ int main(int argc, char* argv[])
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		
 		projection = glm::perspective(glm::radians(camera.Zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 		view = camera.GetViewMatrix();
 
+		sun.draw(projection, view);
 		c.draw(projection, view);
 
 		glfwSwapBuffers(window);
