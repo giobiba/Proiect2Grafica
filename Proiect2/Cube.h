@@ -53,10 +53,10 @@ float vertices[] = {
 class Cube {
 public:
 	unsigned int VAO, VBO;
-	glm::vec3 position, size;
+	glm::vec3 position, size, color;
 	Shader shader;
 
-	Cube(Shader shader, glm::vec3 position = glm::vec3(1.0f), glm::vec3 size = glm::vec3(1.0f)) : shader(shader), position(position), size(size) { createBuffers(); };
+	Cube(Shader shader, glm::vec3 position = glm::vec3(1.0f), glm::vec3 size = glm::vec3(1.0f), glm::vec3 color = glm::vec3(1.0f)) : shader(shader), position(position), size(size), color(color) { createBuffers(); };
 
 	void createBuffers() {
 		glGenVertexArrays(1, &VAO);
@@ -88,6 +88,7 @@ public:
 		shader.SetMatrix4("model", model);
 		shader.SetMatrix4("projection", projection);
 		shader.SetMatrix4("view", view);
+		shader.SetVector3f("objectColor", color);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);

@@ -8,7 +8,9 @@
 
 const unsigned int SCREEN_WIDTH = 800, SCREEN_HEIGHT = 600;
 
-Camera camera(glm::vec3(0.0f, 1.0f, 5.0f));
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 5.0f);
+Camera camera(cameraPos);
 glm::mat4 projection, view;
 
 float lastX = SCREEN_WIDTH / 2.0f;
@@ -17,6 +19,7 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f, lastFrame = 0.0f;
 
+glm::vec3 lightPos = glm::vec3(0.0f, 1.0f, 0.0f), lightColor = glm::vec3(0.949f, 0.960f, 0.760f);
 
 void processInput(GLFWwindow* window)
 {
@@ -87,10 +90,12 @@ int main(int argc, char* argv[])
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
 
 	Shader shader("planet.vert", "planet.frag");
 	Shader lightShader("planet.vert", "sun.frag");
-	Cube c(shader, glm::vec3(1.0f, 1.0f, 3.0f)), sun(lightShader, glm::vec3(0.0f, 1.0f, 0.0f));
+	Cube c(shader, glm::vec3(1.0f, 1.0f, 3.0f), glm::vec3(1.0f), glm::vec3(0.5f, 0.5f, 0.0f));
+	Cube sun(lightShader, lightPos, glm::vec3(1.0f), lightColor);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -106,7 +111,15 @@ int main(int argc, char* argv[])
 		projection = glm::perspective(glm::radians(camera.Zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 		view = camera.GetViewMatrix();
 
+		// drwa the sun
 		sun.draw(projection, view);
+
+		// draw the planets
+
+		shader.use();
+		shader.SetVector3f("lightColor", sun.color);
+		shader.SetVector3f("lightPos", sun.position);
+		shader.SetVector3f("viewpos", camera.Position);
 		c.draw(projection, view);
 
 		glfwSwapBuffers(window);
