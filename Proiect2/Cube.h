@@ -79,12 +79,19 @@ public:
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	void draw(glm::mat4 projection, glm::mat4 view) {
+	void draw(glm::mat4 projection, glm::mat4 view, GLfloat angle, bool isPlanet, float velocity, int direction) {
 		shader.use();
 		glm::mat4 model = glm::mat4(1.0f);
+		
 		model = glm::translate(model, position);
 		model = glm::scale(model, size);
+		model = glm::rotate(model, angle, glm::vec3(0.0f,1.0f, 0.5f));
 
+		if (isPlanet)
+		{
+			float radius = glm::distance(position,glm::vec3(0.0f,1.0f,0.0f));
+			position = glm::vec3(sin(glfwGetTime() * direction * velocity) * radius , position[1], cos(glfwGetTime() * direction * velocity) * radius);
+		}
 		shader.SetMatrix4("model", model);
 		shader.SetMatrix4("projection", projection);
 		shader.SetMatrix4("view", view);

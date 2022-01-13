@@ -13,7 +13,7 @@
 const unsigned int SCREEN_WIDTH = 800, SCREEN_HEIGHT = 600;
 
 // camera data
-glm::vec3 cameraPos = glm::vec3(1.0f, 1.0f, 10.0f);
+glm::vec3 cameraPos = glm::vec3(1.0f, 1.0f, 30.0f);
 float cameraDistance, cameraAngle = 0.0f, acceleration = 1.0f;
 Camera camera(cameraPos);
 
@@ -23,6 +23,7 @@ glm::mat4 projection, view;
 float lastX = SCREEN_WIDTH / 2.0f;
 float lastY = SCREEN_HEIGHT / 2.0f;
 bool firstMouse = true;
+GLfloat angle = 45.0f;
 
 // time between frames
 float deltaTime = 0.0f, lastFrame = 0.0f;
@@ -112,6 +113,8 @@ int main(int argc, char* argv[])
 	Shader shader("planet.vert", "planet.frag");
 	Shader lightShader("planet.vert", "sun.frag");
 	Cube c(shader, glm::vec3(1.0f, 1.0f, 3.0f), glm::vec3(1.0f), glm::vec3(0.5f, 0.5f, 0.0f));
+	Cube d(shader, glm::vec3(3.0f, 1.0f, 5.0f), glm::vec3(2.0f), glm::vec3(0.5f, 0.5f, 0.0f));
+	Cube e(shader, glm::vec3(6.5f, 1.0f, 6.5f), glm::vec3(1.4f), glm::vec3(0.5f, 0.5f, 0.0f));
 	Cube sun(lightShader, lightPos, glm::vec3(1.0f), lightColor);
 
 	cameraAngle = atan(cameraPos.x / cameraPos.y);
@@ -135,15 +138,20 @@ int main(int argc, char* argv[])
 		view = glm::lookAt(glm::vec3(camX, 1.0, camZ), sun.position, glm::vec3(0.0, 1.0, 0.0));
 
 		// draw the sun
-		sun.draw(projection, view);
+		angle = fmod(angle + 0.01, 2* M_PI);
+
+		
+		sun.draw(projection, view, angle,false,1,1);
 
 		// draw the planets
-
 		shader.use();
 		shader.SetVector3f("lightColor", sun.color);
 		shader.SetVector3f("lightPos", sun.position);
 		shader.SetVector3f("viewpos", camera.Position);
-		c.draw(projection, view);
+		c.draw(projection, view, fmod(angle + 0.06, 2 * M_PI), true, 1, 1);
+		d.draw(projection, view, fmod(angle + 0.1, 2 * M_PI), true, 2, -1);
+		e.draw(projection, view, fmod(angle + 0.06, 2 * M_PI), true, 2.5, 1);
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
