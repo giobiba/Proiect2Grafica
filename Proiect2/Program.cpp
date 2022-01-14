@@ -8,7 +8,58 @@
 #include "Sphere.h"
 #include "Cube.h"
 
+#ifndef WHOMST
+#define WHOMST
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#endif
+
 # define M_PI           3.14159265358979323846
+
+float skyboxVertices[] = {
+	// positions          
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
+};
 
 const unsigned int SCREEN_WIDTH = 800, SCREEN_HEIGHT = 600;
 
@@ -84,6 +135,35 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
 
 int main(int argc, char* argv[])
 {
@@ -106,15 +186,40 @@ int main(int argc, char* argv[])
 
 	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
+	unsigned int skyboxVAO, skyboxVBO;
+	glGenVertexArrays(1, &skyboxVAO);
+	glGenBuffers(1, &skyboxVBO);
+	glBindVertexArray(skyboxVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	std::vector<std::string> faces
+	{
+		"./right.jpg",
+		"./left.jpg",
+		"./top.jpg",
+		"./bottom.jpg",
+		"./front.jpg",
+		"./back.jpg"
+	};
+	unsigned int cubemapTexture = loadCubemap(faces);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 
 	Shader shader("planet.vert", "planet.frag");
 	Shader lightShader("planet.vert", "sun.frag");
-	Cube c(shader, glm::vec3(1.0f, 1.0f, 3.0f), glm::vec3(1.0f), glm::vec3(0.5f, 0.5f, 0.0f));
-	Cube d(shader, glm::vec3(3.0f, 1.0f, 5.0f), glm::vec3(2.0f), glm::vec3(0.5f, 0.5f, 0.0f));
-	Cube e(shader, glm::vec3(6.5f, 1.0f, 6.5f), glm::vec3(1.4f), glm::vec3(0.5f, 0.5f, 0.0f));
+	Shader skyboxShader("skybox.vert", "skybox.frag");
+
+	skyboxShader.use();
+	skyboxShader.setInt("skybox", 0);
+
+	Cube c(shader, glm::vec3(1.0f, 1.0f, 3.0f), glm::vec3(1.0f), glm::vec3(0.47f, 0.13f, 0.15f));
+	Cube d(shader, glm::vec3(3.0f, 1.0f, 5.0f), glm::vec3(2.0f), glm::vec3(0.12f, 0.36f, 0.47f));
+	Cube e(shader, glm::vec3(6.5f, 1.0f, 6.5f), glm::vec3(1.4f), glm::vec3(0.90f, 0.5f, 0.0f));
 	Cube sun(lightShader, lightPos, glm::vec3(1.0f), lightColor);
 
 	cameraAngle = atan(cameraPos.x / cameraPos.y);
@@ -152,6 +257,18 @@ int main(int argc, char* argv[])
 		d.draw(projection, view, fmod(angle + 0.1, 2 * M_PI), true, 2, -1);
 		e.draw(projection, view, fmod(angle + 0.06, 2 * M_PI), true, 2.5, 1);
 
+		glDepthFunc(GL_LEQUAL);
+		skyboxShader.use();
+		view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+		skyboxShader.SetMatrix4("view", view);
+		skyboxShader.SetMatrix4("projection", projection);
+
+		glBindVertexArray(skyboxVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LESS);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

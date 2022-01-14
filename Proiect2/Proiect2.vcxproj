@@ -162,7 +162,12 @@
   <ItemGroup>
     <None Include="planet.frag" />
     <None Include="planet.vert" />
+    <None Include="skybox.frag" />
+    <None Include="skybox.vert" />
     <None Include="sun.frag" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="skybox.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
